@@ -12,6 +12,14 @@
         position: absolute;
         top: 10px;
         right: 10px;
+        z-index: 100;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    textarea {
+        resize: vertical;
+        min-height: 200px;
     }
 </style>
 {% endblock %}
@@ -20,7 +28,7 @@
 <div class="container mt-4">
     <div class="row mb-3">
         <div class="col">
-            <h2>Diacritical Translator</h2>
+            <h2 class="float-left">Diacritical Translator</h2>
             <a href="{{ url_for('logout') }}" class="btn btn-outline-danger float-right">Logout</a>
         </div>
     </div>
@@ -29,13 +37,13 @@
         <div class="col-md-6">
             <div class="form-group">
                 <label for="inputText">Input Text:</label>
-                <textarea class="form-control" id="inputText" rows="10"></textarea>
+                <textarea class="form-control" id="inputText" rows="10" placeholder="Enter text here..."></textarea>
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group textarea-container">
                 <label for="outputText">Output Text:</label>
-                <textarea class="form-control" id="outputText" rows="10"></textarea>
+                <textarea class="form-control" id="outputText" rows="10" readonly></textarea>
                 <button class="btn btn-sm btn-secondary copy-btn" onclick="copyToClipboard()">Copy</button>
             </div>
         </div>
@@ -43,16 +51,22 @@
     
     <div class="row mt-3">
         <div class="col text-center">
-            <button class="btn btn-primary" onclick="translate()">Add Diacritics</button>
+            <button class="btn btn-primary" onclick="translateText()">Add Diacritics</button>
         </div>
     </div>
 </div>
+{% endblock %}
 
 {% block scripts %}
 {{super()}}
 <script>
-    function translate() {
+    function translateText() {
         const inputText = document.getElementById('inputText').value;
+        if (!inputText.trim()) {
+            alert('Please enter some text to translate');
+            return;
+        }
+
         fetch('/translate', {
             method: 'POST',
             headers: {
@@ -60,7 +74,12 @@
             },
             body: JSON.stringify({ text: inputText })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.error) {
                 alert(data.error);
@@ -77,15 +96,19 @@
     function copyToClipboard() {
         const outputText = document.getElementById('outputText');
         outputText.select();
-        navigator.clipboard.writeText(outputText.value)
-            .then(() => {
-                alert('Text copied to clipboard!');
-            })
-            .catch(err => {
-                console.error('Failed to copy text:', err);
-                alert('Failed to copy text');
-            });
+        try {
+            document.execCommand('copy');
+            alert('Text copied to clipboard!');
+        } catch (err) {
+            console.error('Failed to copy text:', err);
+            // Fallback to modern clipboard API
+            navigator.clipboard.writeText(outputText.value)
+                .then(() => alert('Text copied to clipboard!'))
+                .catch(err => {
+                    console.error('Failed to copy text:', err);
+                    alert('Failed to copy text');
+                });
+        }
     }
 </script>
-{% endblock %}
 {% endblock %} 

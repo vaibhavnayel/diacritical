@@ -259,6 +259,7 @@ mam,mām
 lonavla,loṇāvlā
 vishnudass,vis͟hnudāss
 kirtankar,kīrtankār
+hubιi,hubῑī
 kirtan,kīrtan
 mangesh,maṅgesh
 mahavidyalaya,mahāvidyālaya
@@ -286,6 +287,7 @@ gopal,gopāl
 nagari,nagarī
 mangalprabhat,maṅgalprabhāt
 lodha,lod͟hā
+kadιe,kaḍῑe
 ughade,ughāḍe
 jaikar,jaikār
 guruparampara,guruparamparā
@@ -349,6 +351,7 @@ atharvangirasa,atharvāṅgīrasa
 bharadwaja,bhāradwāja
 narada,nārada
 vasishtha,vasis͟ht͟ha
+ιshanaya,ῑshānaya
 yajnavalkya,yājñavalkya
 parashara,parāshara
 purva,pūrva
@@ -788,6 +791,7 @@ kale,kāle
 palta,paltā
 vidyarthi,vidyārthi
 laxman,laxmaṇ
+baddukuιi,baḍḍukuῑi
 venkatesh,veṅkaṭesh
 haridas,haridās
 ramchandra,rāmchandra
@@ -815,6 +819,7 @@ pramana,pramāṇa
 pranapratishtha,prāṇapratis͟ht͟hā
 parayana,pārāyaṇa
 totakashtakam,toṭakās͟hṭakam
+bengaιuru,beṅgaῑūrū
 shankarabhashya,shāṅkarabhās͟hya
 ashtottara,as͟hṭottara
 shatanamavali,shatanāmāvali
@@ -954,6 +959,8 @@ kotikoti,koṭikoṭi
 pranama,praṇāma
 gokarn,gokarṇ
 vivekanand,vivekānand
+amembaι,amembaῑ
+amembaιs,amembaῑs
 baithak,bait̲h̲ak
 krshnarao,kṛs̲h̲ṇarāo
 phulambrikar,phulambrīkar
@@ -1014,6 +1021,7 @@ finale,finalé
 sabita,sabitā
 harite,hariṭe
 masurkar,māsurkar
+αshirvachana,ᾱshīrvachana
 nanda,nandā
 alankara,alaṅkāra
 shrivallabh,shrīvallabh
@@ -1045,6 +1053,7 @@ sayujyam,sāyujyam
 sannidhya,sānnidhya
 manju,mañjū
 shankaraloka,shaṅkarāloka
+αshram,ᾱshram
 sadhanayana,sādhanāyana
 aradhana,ārādhanā
 sambhashanam,sambhās͟haṇam
@@ -1055,11 +1064,13 @@ giriji,girijī
 maharaj,mahārāj
 sanyasi,sanyāsī
 shivaratri,shivarātri
+αmchi,ᾱmchī
 mehendi,mehendī
 srikar,srīkar
 varun,varuṇ
 upachara,upachāra
 jagarana,jāgaraṇa
+αradhana,ᾱrādhanā
 bigga,biggā
 bass,bāss
 bajra,bājrā
@@ -1075,6 +1086,7 @@ bas,bās
 gir,gīr
 bhagini,bhaginī
 bhiwani,bhiwanī
+αmchigele,ᾱmchigele
 kashi,kāshī
 vedavyas,vedavyās
 vrndavan,vṛndāvan
@@ -1085,6 +1097,7 @@ gudi,guḍī
 vyasashram,vyāsāshram
 rudraksha,rudrāksha
 nirmalya,nirmālya
+αrati,ᾱratī
 samyamindra,samyamīndra
 ghosha,ghos͟ha
 vilas,vilās
@@ -1177,6 +1190,7 @@ hemalata,hemalatā
 raje,rāje
 manapatra,mānapatra
 bade,baḍe
+hebιekar,hebῑekar
 adhyaksha,adhyaks͟hā
 usha,us͟ha
 raniji,rānījī
@@ -1233,6 +1247,7 @@ tirthakshetra,tīrthakshetra
 madhava,mādhava
 ghadiya,ghaḍiya
 sindur,sindūr
+αshadha,ᾱs͟hād͟ha
 tantrik,tāntrik
 mahavidya,mahāvidyā
 shakti,shaktī
@@ -1261,6 +1276,7 @@ pitamaha,pitāmaha
 mahabharata,mahābhārata
 pandava,pāṇḍavā
 mahaganapti,mahāgaṇapti
+αdya,ᾱdya
 kshetrapala,ks͟hetrapāla
 ganahoma,gaṇahoma
 dwadasha,dwādasha
@@ -1275,6 +1291,7 @@ parijna,parijñā
 smarta,smārta
 himalayan,himālayan
 kanara,kanarā
+mahabaιeshwara,mahābaῑeshwara
 ashrama,āshrama
 bharatavarsha,bhāratavarsha
 sthapanacharya,sthāpanāchārya
@@ -1336,6 +1353,7 @@ iswarananda,īswarānanda
 karunamayi,karuṇāmayī
 gurushakti,gurushaktī
 tirth,tīrth
+mahaswamigaι,mahāswāmigaῑ
 namasmarana,nāmasmaraṇa
 mantradiksha,mantradīkshā
 shodashopachara,shoḍashopachāra
@@ -1388,6 +1406,7 @@ gaddo,gāddo
 shantabai,shāntābāī
 gayathri,gāyathri
 wagha,wāghā
+naimpaιιy,nāimpaῑῑy
 balchandra,bālchandra
 prayashchitta,prāyashchitta
 samskrt,saṁskṛt
@@ -1405,12 +1424,16 @@ krtartha,kṛtārtha
 bhava,bhāva
 sitaram,sitāram
 gurunath,gurunāth
+beιιary,beῑῑāry
+hagaribommanahaιιi,hagaribommanahaῑῑi
+harapanahaιιi,harapanahaῑῑi
 taluka,tālukā
 mauli,māulī
 deepali,deepāli
 poornima,poorṇimā
 diksha,dīks͟hā
 chikkalantulai,chikkalāntulai
+kamaιa,kamaῑa
 santacruz,sāntācruz
 mankekar,maṅkekar
 durgadas,durgādās
@@ -1432,6 +1455,7 @@ pathshala,pāthshālā
 duniya,duniyā
 lagata,lagatā
 molahaiii,molahaīīi
+αbha,ᾱbhā
 karkai,kārkaī
 vaishnav,vais͟hṇav
 mudbhatkai,muḍbhaṭkaī
@@ -1451,6 +1475,8 @@ bharathi,bhārathī
 manjunath,mañjunāth
 gurupada,gurupāda
 sangha,saṅgha
+pαrvati,pᾱrvatī
+mahαdeva,mahᾱdeva
 prabodhah,prabodhaḥ
 devabhasha,devabhās͟hā
 sujata,sujātā
@@ -1558,12 +1584,15 @@ sarang,sāraṅg
 yogeshri,yogeshrī
 zakir,zākir
 udaya,udayā
+hebιe,hebῑe
 ramanavami,rāmanavamī
 bharata,bhārata
+hubbaιi,hubbaῑi
 rupa,rūpa
 ramanand,ramānand
 subhashitam,subhās͟hitam
 hegde,hegḍe
+dharmasthaιa,dharmasthaῑa
 ayudha,āyudha
 gita,gīta
 shivashankaranarayana,shivashaṅkaranārāyaṇa

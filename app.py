@@ -1,24 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from flask_bootstrap import Bootstrap4
+from flask_bootstrap import Bootstrap
 from functools import wraps
 import os
 from diacritics import *
 
-# Load mappings at startup
-try:
-    # First try to load from the mappings.txt file
-    mappings = load_mappings("mappings.txt")
-except Exception as e:
-    print(f"Warning: Could not load from mappings.txt: {e}")
-    try:
-        # Try to load from all_mappings.txt as fallback
-        mappings = load_mappings("all_mappings.txt")
-    except Exception as e:
-        print(f"Error loading mappings: {e}")
-        mappings = {}
-
 app = Flask(__name__)
-bootstrap = Bootstrap4(app)
+bootstrap = Bootstrap(app)
 
 # Get configuration from environment variables
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', '696969696969')
@@ -72,8 +59,11 @@ def translate():
         return jsonify({'error': str(e)}), 500
 
 def main(text):
+    mappings = load_mappings("mappings.txt")
     tokens = generate_tokens(text)
+    print(tokens)
     translated_tokens = reconstruct_tokens(tokens, mappings)
+    print(translated_tokens)
     translated_text = join_tokens(translated_tokens)
     return translated_text
 
