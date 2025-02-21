@@ -61,9 +61,7 @@ def translate():
 def main(text):
     mappings = load_mappings("mappings.txt")
     tokens = generate_tokens(text)
-    print(tokens)
     translated_tokens = reconstruct_tokens(tokens, mappings)
-    print(translated_tokens)
     translated_text = join_tokens(translated_tokens)
     return translated_text
 
