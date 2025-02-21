@@ -21,9 +21,9 @@ app = Flask(__name__)
 bootstrap = Bootstrap4(app)
 
 # Get configuration from environment variables
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your-secret-key-here')
-USERNAME = os.environ.get('APP_USERNAME', 'admin')
-PASSWORD = os.environ.get('APP_PASSWORD', 'password')
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', '696969696969')
+USERNAME = os.environ.get('APP_USERNAME', 'chitrapur')
+PASSWORD = os.environ.get('APP_PASSWORD', 'NCC1701')
 
 # Login decorator
 def login_required(f):
