@@ -44,10 +44,11 @@ def make_mappings(tokens: list[str]) -> dict[str, str]:
 def reconstruct_tokens(tokens: list[str], mappings: dict[str, str]) -> list[str]:
     reconstructed_tokens = []
     for token in tokens:
-        if token.lower() not in mappings:
-            reconstructed_tokens.append(token)
+        token_without_diacritics = remove_diacritics(token)
+        if token_without_diacritics.lower() not in mappings:
+            reconstructed_tokens.append(token_without_diacritics)
         else:
-            reconstructed_tokens.append(add_diacritics(token, mappings))
+            reconstructed_tokens.append(add_diacritics(token_without_diacritics, mappings))
     return reconstructed_tokens
 
 def verify(text: str, reconstructed_text: str, tokens: list[str], reconstructed_tokens: list[str]) -> bool:
