@@ -2,6 +2,8 @@
 
 A web application that adds diacritical marks to text based on predefined mappings.
 
+access the app at [diacritical.onrender.com](https://diacritical.onrender.com)
+
 ## Setup
 
 1. Install dependencies:
@@ -42,9 +44,3 @@ python app.py
 3. Paste text in the input box
 4. Click "Add Diacritics" to process the text
 5. Use the copy button to copy the processed text
-
-## Security Notes
-
-- Change the default username and password
-- Use a strong secret key
-- Keep your mappings file secure 
