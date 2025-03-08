@@ -246,78 +246,6 @@ const MappingsManager = (function() {
         });
     }
     
-    // Migration functionality
-    function setupMigration() {
-        $('#migrateBtn').on('click', function() {
-            $(this).prop('disabled', true).text('Migrating...');
-            $('#migrationProgress').show();
-            $('#migrationStatus').html('<p class="text-info">Starting migration process...</p>');
-            
-            // Start migration with progress updates
-            $.ajax({
-                url: '/api/migrate',
-                method: 'POST',
-                success: function(response) {
-                    $('#migrationProgress').hide();
-                    $('#migrationStatus').html(`<p class="text-success">Migration completed successfully!</p>`);
-                    showAlert(`Migration completed! ${response.count} mappings processed.`);
-                    mappingsTable.ajax.reload();
-                    $('#migrateBtn').prop('disabled', false).text('Migrate from Text File');
-                },
-                error: function(xhr) {
-                    $('#migrationProgress').hide();
-                    $('#migrationStatus').html(`<p class="text-danger">Migration failed. Please try again.</p>`);
-                    const error = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
-                    showAlert(error, 'danger');
-                    $('#migrateBtn').prop('disabled', false).text('Migrate from Text File');
-                }
-            });
-            
-            // Poll for progress updates
-            pollMigrationStatus();
-        });
-    }
-    
-    // Poll migration status
-    function pollMigrationStatus() {
-        let pollCount = 0;
-        const maxPolls = 100; // Prevent infinite polling
-        
-        function poll() {
-            if (pollCount >= maxPolls) {
-                return;
-            }
-            
-            $.ajax({
-                url: '/api/migrate/status',
-                method: 'GET',
-                success: function(data) {
-                    if (data.status === 'completed') {
-                        $('#migrationProgress').hide();
-                        $('#migrationStatus').html(`<p class="text-success">Migration completed!</p>`);
-                        return;
-                    } else if (data.status === 'in_progress') {
-                        $('#migrationStatus').html(`
-                            <p class="text-info">
-                                Migration in progress...<br>
-                                ${data.message || ''}
-                            </p>
-                        `);
-                        pollCount++;
-                        setTimeout(poll, 1000);
-                    }
-                },
-                error: function() {
-                    pollCount++;
-                    setTimeout(poll, 1000);
-                }
-            });
-        }
-        
-        // Start polling
-        setTimeout(poll, 1000);
-    }
-    
     // File upload functionality
     function setupFileUpload() {
         $('#uploadForm').on('submit', function(e) {
@@ -379,7 +307,6 @@ const MappingsManager = (function() {
             setupEditMapping();
             setupDeleteMapping();
             setupBatchDelete();
-            setupMigration();
             setupFileUpload();
         },
         refreshTable: function() {

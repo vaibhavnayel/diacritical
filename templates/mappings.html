@@ -45,17 +45,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div id="migrationPanel">
-                <h4>Data Migration</h4>
-                <p>If you're setting up the database for the first time, you can migrate existing mappings from the text file.</p>
-                <div class="progress mb-3" style="display: none;" id="migrationProgress">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
-                </div>
-                <div id="migrationStatus"></div>
-                <button id="migrateBtn" class="btn btn-warning">Migrate from Text File</button>
-                
-                <hr>
-                
+            <div id="uploadPanel">
                 <h4>Upload Mappings File</h4>
                 <p>Upload a custom mappings.txt file to update or overwrite the database.</p>
                 <form id="uploadForm" enctype="multipart/form-data">
@@ -67,11 +57,11 @@
                     <div class="form-group">
                         <div class="custom-control custom-radio">
                             <input type="radio" id="updateMode" name="importMode" value="update" class="custom-control-input" checked>
-                            <label class="custom-control-label" for="updateMode">Update (add new mappings, keep existing)</label>
+                            <label class="custom-control-label" for="updateMode">add new and update existing mappings</label>
                         </div>
                         <div class="custom-control custom-radio">
                             <input type="radio" id="overwriteMode" name="importMode" value="overwrite" class="custom-control-input">
-                            <label class="custom-control-label" for="overwriteMode">Overwrite (replace all mappings)</label>
+                            <label class="custom-control-label" for="overwriteMode">delete all existing mappings and create new ones</label>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-info">Upload and Process</button>
