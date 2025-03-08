@@ -6,6 +6,7 @@
 {{super()}}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/select/1.3.4/css/select.dataTables.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/mappings.css') }}">
 {% endblock %}
 
@@ -89,6 +90,10 @@
                         <option value="100">100</option>
                     </select>
                 </div>
+                
+                <a href="/api/mappings/download" class="btn btn-success ml-3" id="downloadBtn">
+                    <i class="fa fa-download"></i> Download Mappings
+                </a>
             </div>
             <div class="table-responsive">
                 <table id="mappingsTable" class="table table-striped table-bordered">

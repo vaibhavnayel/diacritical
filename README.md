@@ -9,6 +9,7 @@ A web application for adding diacritics to input text based on a dictionary of m
 - Add, edit, and delete mappings
 - Sort and filter mappings
 - Upload custom mapping files to update or overwrite the database
+- Download all mappings as a text file
 
 ## Setup
 
@@ -83,6 +84,7 @@ This is a developer-only operation and should be performed by administrators wit
 3. Click "Add Diacritics" to translate the text
 4. Use the "Manage Mappings" page to add, edit, or delete mappings
 5. Upload custom mapping files to update or overwrite the database
+6. Download all mappings as a text file for backup or sharing
 
 ## Technical Details
 

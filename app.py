@@ -283,6 +283,32 @@ def get_migration_status():
         'elapsed': time.time() - migration_status['start_time'] if migration_status['start_time'] else 0
     })
 
+@app.route('/api/mappings/download', methods=['GET'])
+@login_required
+def download_mappings():
+    try:
+        # Get all mappings from the database
+        mappings = DiacriticMapping.query.order_by(DiacriticMapping.plain_text).all()
+        
+        # Create a string with all mappings in the format plain_text,diacritic_text
+        mappings_text = ""
+        for mapping in mappings:
+            mappings_text += f"{mapping.plain_text},{mapping.diacritic_text}\n"
+        
+        # Create a response with the mappings text
+        response = app.response_class(
+            response=mappings_text,
+            status=200,
+            mimetype='text/plain'
+        )
+        
+        # Set the Content-Disposition header to make the browser download the file
+        response.headers["Content-Disposition"] = "attachment; filename=mappings.txt"
+        
+        return response
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Run the application
 if __name__ == '__main__':
     app.run(debug=True)

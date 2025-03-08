@@ -68,4 +68,8 @@
 
 .page-length-selector select {
     width: auto;
+}
+
+#downloadBtn {
+    margin-left: 15px;
 } 
