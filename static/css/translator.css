@@ -1,0 +1,29 @@
+/* Translator page styles */
+
+.container {
+    margin-top: 30px;
+}
+
+.textarea-container {
+    position: relative;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 200px;
+}
+
+.nav-buttons {
+    margin-bottom: 20px;
+} 

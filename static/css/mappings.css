@@ -1,0 +1,71 @@
+/* Mappings page styles */
+
+.container {
+    margin-top: 30px;
+}
+
+.btn-group-sm {
+    margin-top: 5px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.alert {
+    margin-top: 20px;
+}
+
+.table-responsive {
+    margin-top: 20px;
+}
+
+.action-buttons {
+    white-space: nowrap;
+}
+
+#addMappingForm {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.nav-buttons {
+    margin-bottom: 20px;
+}
+
+.batch-actions {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.select-checkbox {
+    text-align: center;
+}
+
+.select-checkbox:before {
+    content: '';
+    margin-left: 7px;
+}
+
+.selected .select-checkbox:before {
+    content: '✓';
+    margin-left: 7px;
+}
+
+.page-length-selector {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
+.page-length-selector label {
+    margin-right: 10px;
+    margin-bottom: 0;
+}
+
+.page-length-selector select {
+    width: auto;
+} 
