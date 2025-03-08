@@ -8,7 +8,7 @@ A web application for adding diacritics to input text based on a dictionary of m
 - Manage diacritic mappings through a web interface
 - Add, edit, and delete mappings
 - Sort and filter mappings
-- Migrate existing mappings from a text file to the database
+- Upload custom mapping files to update or overwrite the database
 
 ## Setup
 
@@ -36,7 +36,7 @@ A web application for adding diacritics to input text based on a dictionary of m
    python app.py
    ```
 
-### Database Migration
+### Database Migration (Developer Only)
 
 To migrate mappings from the text file to the database:
 
@@ -45,7 +45,6 @@ To migrate mappings from the text file to the database:
    ```
    python migrate_data.py
    ```
-3. Alternatively, you can use the "Migrate from Text File" button on the mappings page after logging in
 
 ## Deployment on Render
 
@@ -67,13 +66,15 @@ To migrate mappings from the text file to the database:
    - `APP_PASSWORD`: Password for logging in
    - `DATABASE_URL`: The Internal Database URL from your PostgreSQL database
 
-### Initial Data Migration
+### Initial Data Migration (Developer Only)
 
-After deploying, you can migrate your mappings from the text file to the database by:
+After deploying, you can migrate your mappings from the text file to the database by running:
 
-1. Logging into the application
-2. Going to the "Manage Mappings" page
-3. Clicking the "Migrate from Text File" button
+```
+python migrate_data.py
+```
+
+This is a developer-only operation and should be performed by administrators with direct access to the server.
 
 ## Usage
 
@@ -81,6 +82,7 @@ After deploying, you can migrate your mappings from the text file to the databas
 2. On the translator page, enter text without diacritics
 3. Click "Add Diacritics" to translate the text
 4. Use the "Manage Mappings" page to add, edit, or delete mappings
+5. Upload custom mapping files to update or overwrite the database
 
 ## Technical Details
 
