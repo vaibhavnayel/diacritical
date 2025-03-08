@@ -21,6 +21,9 @@
         resize: vertical;
         min-height: 200px;
     }
+    .nav-buttons {
+        margin-bottom: 20px;
+    }
 </style>
 {% endblock %}
 
@@ -29,7 +32,10 @@
     <div class="row mb-3">
         <div class="col">
             <h2 class="float-left">Diacritical Translator</h2>
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger float-right">Logout</a>
+            <div class="float-right nav-buttons">
+                <a href="{{ url_for('mappings_page') }}" class="btn btn-primary">Manage Mappings</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+            </div>
         </div>
     </div>
     
