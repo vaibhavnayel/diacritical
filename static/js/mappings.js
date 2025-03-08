@@ -15,7 +15,17 @@ const MappingsManager = (function() {
         mappingsTable = $('#mappingsTable').DataTable({
             ajax: {
                 url: '/api/mappings',
-                dataSrc: ''
+                dataSrc: '',
+                beforeSend: function() {
+                    // Show loading indicator
+                    $('#mappingsTable').addClass('loading');
+                    $('body').append('<div class="table-loading-overlay"><div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div></div>');
+                },
+                complete: function() {
+                    // Hide loading indicator
+                    $('#mappingsTable').removeClass('loading');
+                    $('.table-loading-overlay').remove();
+                }
             },
             columns: [
                 {
@@ -45,8 +55,12 @@ const MappingsManager = (function() {
                     orderable: false,
                     render: function(data) {
                         return `
-                            <button class="btn btn-sm btn-primary edit-btn" data-id="${data.id}">Edit</button>
-                            <button class="btn btn-sm btn-danger delete-btn" data-id="${data.id}">Delete</button>
+                            <button class="btn btn-sm btn-primary edit-btn" data-id="${data.id}" title="Edit Mapping">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-btn" data-id="${data.id}" title="Delete Mapping">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
                         `;
                     }
                 }
@@ -57,7 +71,26 @@ const MappingsManager = (function() {
                 selector: 'td:first-child'
             },
             pageLength: 10,
-            lengthMenu: [10, 25, 50, 100]
+            lengthMenu: [10, 25, 50, 100],
+            responsive: true,
+            language: {
+                emptyTable: "No mappings found. Add your first mapping above!",
+                zeroRecords: "No matching mappings found",
+                info: "Showing _START_ to _END_ of _TOTAL_ mappings",
+                infoEmpty: "Showing 0 to 0 of 0 mappings",
+                infoFiltered: "(filtered from _MAX_ total mappings)",
+                search: "<i class='fas fa-search'></i> Search:",
+                paginate: {
+                    first: "<i class='fas fa-angle-double-left'></i>",
+                    previous: "<i class='fas fa-angle-left'></i>",
+                    next: "<i class='fas fa-angle-right'></i>",
+                    last: "<i class='fas fa-angle-double-right'></i>"
+                }
+            },
+            drawCallback: function() {
+                // Add tooltip to buttons
+                $('[title]').tooltip();
+            }
         });
         
         // Handle row selection
@@ -83,23 +116,41 @@ const MappingsManager = (function() {
         const count = selectedRows.length;
         $('#selectedCount').text(`(${count} item${count !== 1 ? 's' : ''} selected)`);
         $('#batchDeleteBtn').prop('disabled', count === 0);
+        
+        // Animate count change
+        $('#selectedCount').addClass('highlight');
+        setTimeout(() => {
+            $('#selectedCount').removeClass('highlight');
+        }, 300);
     }
     
     // Show alert message
     function showAlert(message, type = 'success') {
+        const icon = type === 'success' ? 'check-circle' : 
+                    type === 'danger' ? 'exclamation-circle' :
+                    type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+                    
         const alertHtml = `
             <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
+                <i class="fas fa-${icon} mr-2"></i> ${message}
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
         `;
-        $('#alerts').html(alertHtml);
+        
+        // Remove existing alerts
+        $('#alerts').html('');
+        
+        // Add new alert with animation
+        const $alert = $(alertHtml).appendTo('#alerts');
+        $alert.hide().slideDown(300);
         
         // Auto-dismiss after 5 seconds
         setTimeout(() => {
-            $('.alert').alert('close');
+            $alert.slideUp(300, function() {
+                $(this).remove();
+            });
         }, 5000);
     }
     
@@ -111,6 +162,15 @@ const MappingsManager = (function() {
             const plainText = $('#plainText').val().trim();
             const diacriticText = $('#diacriticText').val().trim();
             
+            // Disable form during submission
+            const $form = $(this);
+            const $submitBtn = $form.find('button[type="submit"]');
+            const originalBtnText = $submitBtn.html();
+            
+            $form.find('input').prop('disabled', true);
+            $submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+            $submitBtn.prop('disabled', true);
+            
             $.ajax({
                 url: '/api/mappings',
                 method: 'POST',
@@ -121,15 +181,61 @@ const MappingsManager = (function() {
                 }),
                 success: function(response) {
                     showAlert('Mapping added successfully!');
-                    $('#mappingForm')[0].reset();
-                    mappingsTable.ajax.reload();
+                    $form[0].reset();
+                    
+                    // Highlight the new row
+                    mappingsTable.ajax.reload(function() {
+                        highlightNewMapping(response.id);
+                    });
                 },
                 error: function(xhr) {
                     const error = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
                     showAlert(error, 'danger');
+                },
+                complete: function() {
+                    // Re-enable form
+                    $form.find('input').prop('disabled', false);
+                    $submitBtn.html(originalBtnText);
+                    $submitBtn.prop('disabled', false);
+                    $('#plainText').focus();
                 }
             });
         });
+    }
+    
+    // Highlight a newly added or updated mapping
+    function highlightNewMapping(id) {
+        // Find the row with the matching ID
+        const $rows = $('#mappingsTable tbody tr');
+        let $targetRow = null;
+        
+        $rows.each(function() {
+            const rowData = mappingsTable.row(this).data();
+            if (rowData && rowData.id === id) {
+                $targetRow = $(this);
+                return false; // Break the loop
+            }
+        });
+        
+        if ($targetRow) {
+            // Scroll to the row if needed
+            const $tableContainer = $('#mappingsTable').closest('.table-responsive');
+            const rowTop = $targetRow.position().top;
+            const containerHeight = $tableContainer.height();
+            const scrollTop = $tableContainer.scrollTop();
+            
+            if (rowTop < 0 || rowTop > containerHeight) {
+                $tableContainer.animate({
+                    scrollTop: scrollTop + rowTop - 50
+                }, 300);
+            }
+            
+            // Highlight the row
+            $targetRow.addClass('highlight-row');
+            setTimeout(() => {
+                $targetRow.removeClass('highlight-row');
+            }, 2000);
+        }
     }
     
     // Edit mapping functionality
@@ -144,6 +250,9 @@ const MappingsManager = (function() {
             $('#editDiacriticText').val(row.diacritic_text);
             
             $('#editModal').modal('show');
+            setTimeout(() => {
+                $('#editPlainText').focus();
+            }, 500);
         });
         
         // Save edited mapping
@@ -151,6 +260,12 @@ const MappingsManager = (function() {
             const id = $('#editId').val();
             const plainText = $('#editPlainText').val().trim();
             const diacriticText = $('#editDiacriticText').val().trim();
+            
+            // Disable button during submission
+            const $btn = $(this);
+            const originalBtnText = $btn.html();
+            $btn.html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+            $btn.prop('disabled', true);
             
             $.ajax({
                 url: `/api/mappings/${id}`,
@@ -163,13 +278,30 @@ const MappingsManager = (function() {
                 success: function(response) {
                     $('#editModal').modal('hide');
                     showAlert('Mapping updated successfully!');
-                    mappingsTable.ajax.reload();
+                    
+                    // Highlight the updated row
+                    mappingsTable.ajax.reload(function() {
+                        highlightNewMapping(id);
+                    });
                 },
                 error: function(xhr) {
                     const error = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
                     showAlert(error, 'danger');
+                },
+                complete: function() {
+                    // Re-enable button
+                    $btn.html(originalBtnText);
+                    $btn.prop('disabled', false);
                 }
             });
+        });
+        
+        // Handle enter key in edit modal
+        $('#editForm').on('keypress', function(e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                $('#saveEdit').click();
+            }
         });
     }
     
@@ -191,6 +323,12 @@ const MappingsManager = (function() {
         $('#confirmDelete').on('click', function() {
             if (!deleteId) return;
             
+            // Disable button during submission
+            const $btn = $(this);
+            const originalBtnText = $btn.html();
+            $btn.html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
+            $btn.prop('disabled', true);
+            
             $.ajax({
                 url: `/api/mappings/${deleteId}`,
                 method: 'DELETE',
@@ -203,6 +341,11 @@ const MappingsManager = (function() {
                     $('#deleteModal').modal('hide');
                     const error = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
                     showAlert(error, 'danger');
+                },
+                complete: function() {
+                    // Re-enable button
+                    $btn.html(originalBtnText);
+                    $btn.prop('disabled', false);
                 }
             });
         });
@@ -225,6 +368,12 @@ const MappingsManager = (function() {
             
             const ids = selectedRows.map(row => row.id);
             
+            // Disable button during submission
+            const $btn = $(this);
+            const originalBtnText = $btn.html();
+            $btn.html('<i class="fas fa-spinner fa-spin"></i> Deleting...');
+            $btn.prop('disabled', true);
+            
             $.ajax({
                 url: '/api/mappings/batch-delete',
                 method: 'POST',
@@ -241,6 +390,11 @@ const MappingsManager = (function() {
                     $('#batchDeleteModal').modal('hide');
                     const error = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
                     showAlert(error, 'danger');
+                },
+                complete: function() {
+                    // Re-enable button
+                    $btn.html(originalBtnText);
+                    $btn.prop('disabled', false);
                 }
             });
         });
@@ -264,9 +418,18 @@ const MappingsManager = (function() {
             formData.append('file', file);
             formData.append('mode', importMode);
             
+            // Disable form during submission
+            const $form = $(this);
+            const $submitBtn = $form.find('button[type="submit"]');
+            const originalBtnText = $submitBtn.html();
+            
+            $form.find('input').prop('disabled', true);
+            $submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+            $submitBtn.prop('disabled', true);
+            
             // Show progress and status
             $('#uploadProgress').show();
-            $('#uploadStatus').html('<p class="text-info">Uploading file...</p>');
+            $('#uploadStatus').html('<p class="text-info"><i class="fas fa-info-circle"></i> Uploading file...</p>');
             
             $.ajax({
                 url: '/api/mappings/upload',
@@ -276,7 +439,7 @@ const MappingsManager = (function() {
                 processData: false,
                 success: function(response) {
                     $('#uploadProgress').hide();
-                    $('#uploadStatus').html(`<p class="text-success">File processed successfully!</p>`);
+                    $('#uploadStatus').html(`<p class="text-success"><i class="fas fa-check-circle"></i> File processed successfully!</p>`);
                     
                     let message = '';
                     if (importMode === 'update') {
@@ -287,15 +450,51 @@ const MappingsManager = (function() {
                     
                     showAlert(message);
                     mappingsTable.ajax.reload();
-                    $('#uploadForm')[0].reset();
+                    $form[0].reset();
                 },
                 error: function(xhr) {
                     $('#uploadProgress').hide();
-                    $('#uploadStatus').html(`<p class="text-danger">Upload failed. Please try again.</p>`);
+                    $('#uploadStatus').html(`<p class="text-danger"><i class="fas fa-exclamation-circle"></i> Upload failed. Please try again.</p>`);
                     const error = xhr.responseJSON ? xhr.responseJSON.error : 'An error occurred';
                     showAlert(error, 'danger');
+                },
+                complete: function() {
+                    // Re-enable form
+                    $form.find('input').prop('disabled', false);
+                    $submitBtn.html(originalBtnText);
+                    $submitBtn.prop('disabled', false);
                 }
             });
+        });
+        
+        // Clear status when selecting a new file
+        $('#mappingsFile').on('change', function() {
+            $('#uploadStatus').html('');
+        });
+    }
+    
+    // Add keyboard shortcuts
+    function setupKeyboardShortcuts() {
+        $(document).on('keydown', function(e) {
+            // Alt+N to focus on new mapping form
+            if (e.altKey && e.key === 'n') {
+                e.preventDefault();
+                $('#plainText').focus();
+            }
+            
+            // Alt+D to focus on delete selected button (if enabled)
+            if (e.altKey && e.key === 'd') {
+                e.preventDefault();
+                if (!$('#batchDeleteBtn').prop('disabled')) {
+                    $('#batchDeleteBtn').focus();
+                }
+            }
+            
+            // Alt+S to focus on search box
+            if (e.altKey && e.key === 's') {
+                e.preventDefault();
+                $('.dataTables_filter input').focus();
+            }
         });
     }
     
@@ -308,6 +507,12 @@ const MappingsManager = (function() {
             setupDeleteMapping();
             setupBatchDelete();
             setupFileUpload();
+            setupKeyboardShortcuts();
+            
+            // Show welcome message
+            setTimeout(() => {
+                showAlert('Welcome to Diacritical Mappings Manager!', 'info');
+            }, 500);
         },
         refreshTable: function() {
             if (mappingsTable) {
@@ -321,4 +526,17 @@ const MappingsManager = (function() {
 // Initialize when document is ready
 $(document).ready(function() {
     MappingsManager.init();
+    
+    // Add tooltips to static elements
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Add animation to the download button
+    $('#downloadBtn').hover(
+        function() {
+            $(this).find('i').addClass('fa-bounce');
+        },
+        function() {
+            $(this).find('i').removeClass('fa-bounce');
+        }
+    );
 }); 

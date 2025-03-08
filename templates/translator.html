@@ -4,41 +4,52 @@
 
 {% block styles %}
 {{super()}}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/translator.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row mb-3">
-        <div class="col">
-            <h2 class="float-left">Diacritical Translator</h2>
-            <div class="float-right nav-buttons">
-                <a href="{{ url_for('mappings_page') }}" class="btn btn-primary">Manage Mappings</a>
-                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
-            </div>
+<div class="container translator-container">
+    <div class="page-header">
+        <h1 class="page-title">Diacritical Translator</h1>
+        <div class="nav-buttons">
+            <a href="{{ url_for('mappings_page') }}" class="btn btn-primary">
+                <i class="fas fa-cog"></i> Manage Mappings
+            </a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
         </div>
     </div>
     
     <div class="row">
         <div class="col-md-6">
-            <div class="form-group">
-                <label for="inputText">Input Text:</label>
-                <textarea class="form-control" id="inputText" rows="10" placeholder="Enter text here..."></textarea>
+            <div class="text-panel">
+                <h4>Input Text</h4>
+                <div class="form-group">
+                    <textarea class="form-control" id="inputText" rows="10" placeholder="Enter text here..."></textarea>
+                </div>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="form-group textarea-container">
-                <label for="outputText">Output Text:</label>
-                <textarea class="form-control" id="outputText" rows="10" readonly></textarea>
-                <button class="btn btn-sm btn-secondary copy-btn" id="copyBtn">Copy</button>
+            <div class="text-panel">
+                <h4>Output Text</h4>
+                <div class="textarea-container">
+                    <textarea class="form-control" id="outputText" rows="10" readonly></textarea>
+                    <button class="copy-btn" id="copyBtn">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="row mt-3">
-        <div class="col text-center">
-            <button class="btn btn-primary" id="translateBtn">Add Diacritics</button>
-        </div>
+    <div class="translate-btn-container">
+        <button class="translate-btn" id="translateBtn">
+            <i class="fas fa-language"></i> Add Diacritics
+        </button>
     </div>
 </div>
 {% endblock %}
