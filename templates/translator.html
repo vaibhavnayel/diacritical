@@ -31,12 +31,18 @@
     <div class="page-header">
         <h1 class="page-title">Diacritical Translator</h1>
         <div class="nav-buttons">
+            {% if session.get('logged_in') %}
             <a href="{{ url_for('mappings_page') }}" class="btn btn-primary">
                 <i class="fas fa-cog"></i> Manage Mappings
             </a>
             <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i> Login to Manage Mappings
+            </a>
+            {% endif %}
         </div>
     </div>
     

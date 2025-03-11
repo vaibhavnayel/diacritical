@@ -75,7 +75,7 @@ def login_required(f):
 # Routes
 @app.route('/', methods=['GET'])
 def index():
-    return redirect(url_for('login'))
+    return redirect(url_for('translator'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -90,15 +90,13 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
-    return redirect(url_for('login'))
+    return redirect(url_for('translator'))
 
 @app.route('/translator', methods=['GET'])
-@login_required
 def translator():
     return render_template('translator.html')
 
 @app.route('/translate', methods=['POST'])
-@login_required
 def translate():
     text = request.json.get('text', '')
     if not text:
