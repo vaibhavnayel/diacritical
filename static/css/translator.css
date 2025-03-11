@@ -65,6 +65,7 @@
     font-size: 16px;
     resize: vertical;
     transition: var(--transition);
+    font-family: var(--input-font);
 }
 
 .text-panel textarea:focus {

@@ -54,6 +54,15 @@ migration_status = {
     'start_time': None
 }
 
+# Add CLI commands
+@app.cli.command("lowercase-migration")
+def lowercase_migration_command():
+    """Convert all mappings in the database to lowercase."""
+    from lowercase_migration import run_migration
+    print("Starting lowercase migration...")
+    run_migration()
+    print("Migration completed.")
+
 # Login decorator
 def login_required(f):
     @wraps(f)

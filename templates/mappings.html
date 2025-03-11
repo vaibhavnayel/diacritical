@@ -10,6 +10,22 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/mappings.css') }}">
+<style>
+    /* Ensure Calibri is available as a fallback */
+    @font-face {
+        font-family: 'Calibri';
+        src: local('Calibri'), local('Calibri Regular');
+        font-weight: normal;
+        font-style: normal;
+    }
+    
+    @font-face {
+        font-family: 'Calibri';
+        src: local('Calibri Bold'), local('Calibri-Bold');
+        font-weight: bold;
+        font-style: normal;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -40,6 +56,7 @@
                     <div class="form-group">
                         <label for="diacriticText">Diacritic Text:</label>
                         <input type="text" class="form-control" id="diacriticText" required>
+                        <small class="form-text text-muted"><i class="fas fa-info-circle"></i> All text will be automatically converted to lowercase.</small>
                     </div>
                     <button type="submit" class="btn btn-success">
                         <i class="fas fa-plus"></i> Add Mapping
@@ -140,6 +157,7 @@
                     <div class="form-group">
                         <label for="editDiacriticText">Diacritic Text:</label>
                         <input type="text" class="form-control" id="editDiacriticText" required>
+                        <small class="form-text text-muted"><i class="fas fa-info-circle"></i> All text will be automatically converted to lowercase.</small>
                     </div>
                 </form>
             </div>

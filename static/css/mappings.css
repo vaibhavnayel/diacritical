@@ -31,6 +31,15 @@
     margin-bottom: 15px;
 }
 
+/* Ensure all inputs use Calibri font */
+#addMappingForm input,
+#uploadPanel input,
+#editModal input,
+.dataTables_filter input,
+.page-length-selector select {
+    font-family: var(--input-font);
+}
+
 .form-control-file {
     padding: 8px 0;
 }
@@ -109,6 +118,15 @@
 
 .table {
     margin-bottom: 0;
+}
+
+/* Ensure table cells use Calibri font */
+#mappingsTable,
+#mappingsTable th,
+#mappingsTable td,
+.dataTables_info,
+.dataTables_paginate {
+    font-family: var(--table-font);
 }
 
 .table th {

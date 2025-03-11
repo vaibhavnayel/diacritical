@@ -159,8 +159,13 @@ const MappingsManager = (function() {
         $('#mappingForm').on('submit', function(e) {
             e.preventDefault();
             
-            const plainText = $('#plainText').val().trim();
-            const diacriticText = $('#diacriticText').val().trim();
+            // Convert inputs to lowercase
+            const plainText = $('#plainText').val().trim().toLowerCase();
+            const diacriticText = $('#diacriticText').val().trim().toLowerCase();
+            
+            // Update the input fields with lowercase values
+            $('#plainText').val(plainText);
+            $('#diacriticText').val(diacriticText);
             
             // Disable form during submission
             const $form = $(this);
@@ -200,6 +205,31 @@ const MappingsManager = (function() {
                     $('#plainText').focus();
                 }
             });
+        });
+        
+        // Add input event listeners to convert text to lowercase as user types
+        $('#plainText, #diacriticText').on('input', function() {
+            const input = $(this);
+            const cursorPosition = this.selectionStart;
+            const value = input.val();
+            const lowercaseValue = value.toLowerCase();
+            
+            // Only update if there's a difference to avoid cursor jumping
+            if (value !== lowercaseValue) {
+                input.val(lowercaseValue);
+                // Restore cursor position
+                this.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        });
+        
+        // Also convert on paste events
+        $('#plainText, #diacriticText').on('paste', function() {
+            const input = $(this);
+            // Use setTimeout to get the value after the paste event completes
+            setTimeout(function() {
+                const value = input.val();
+                input.val(value.toLowerCase());
+            }, 0);
         });
     }
     
@@ -246,8 +276,8 @@ const MappingsManager = (function() {
             const row = mappingsTable.row($(this).closest('tr')).data();
             
             $('#editId').val(id);
-            $('#editPlainText').val(row.plain_text);
-            $('#editDiacriticText').val(row.diacritic_text);
+            $('#editPlainText').val(row.plain_text.toLowerCase());
+            $('#editDiacriticText').val(row.diacritic_text.toLowerCase());
             
             $('#editModal').modal('show');
             setTimeout(() => {
@@ -258,8 +288,14 @@ const MappingsManager = (function() {
         // Save edited mapping
         $('#saveEdit').on('click', function() {
             const id = $('#editId').val();
-            const plainText = $('#editPlainText').val().trim();
-            const diacriticText = $('#editDiacriticText').val().trim();
+            
+            // Convert inputs to lowercase
+            const plainText = $('#editPlainText').val().trim().toLowerCase();
+            const diacriticText = $('#editDiacriticText').val().trim().toLowerCase();
+            
+            // Update the input fields with lowercase values
+            $('#editPlainText').val(plainText);
+            $('#editDiacriticText').val(diacriticText);
             
             // Disable button during submission
             const $btn = $(this);
@@ -302,6 +338,31 @@ const MappingsManager = (function() {
                 e.preventDefault();
                 $('#saveEdit').click();
             }
+        });
+        
+        // Add input event listeners to convert text to lowercase as user types in edit modal
+        $('#editPlainText, #editDiacriticText').on('input', function() {
+            const input = $(this);
+            const cursorPosition = this.selectionStart;
+            const value = input.val();
+            const lowercaseValue = value.toLowerCase();
+            
+            // Only update if there's a difference to avoid cursor jumping
+            if (value !== lowercaseValue) {
+                input.val(lowercaseValue);
+                // Restore cursor position
+                this.setSelectionRange(cursorPosition, cursorPosition);
+            }
+        });
+        
+        // Also convert on paste events in edit modal
+        $('#editPlainText, #editDiacriticText').on('paste', function() {
+            const input = $(this);
+            // Use setTimeout to get the value after the paste event completes
+            setTimeout(function() {
+                const value = input.val();
+                input.val(value.toLowerCase());
+            }, 0);
         });
     }
     
