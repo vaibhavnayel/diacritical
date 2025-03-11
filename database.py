@@ -40,6 +40,29 @@ class DiacriticMapping(db.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
+class Feedback(db.Model):
+    """
+    Database model for user feedback.
+    """
+    __tablename__ = 'feedback'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.Text, nullable=False)
+    email = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<Feedback {self.id}: {self.message[:30]}...>"
+    
+    def to_dict(self):
+        """Convert the model instance to a dictionary"""
+        return {
+            'id': self.id,
+            'message': self.message,
+            'email': self.email,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 def init_db(app):
     """Initialize the database with the Flask app"""
     db.init_app(app)
@@ -48,7 +71,7 @@ def init_db(app):
     with app.app_context():
         import sqlalchemy as sa
         inspector = sa.inspect(db.engine)
-        if not inspector.has_table('diacritic_mappings'):
+        if not inspector.has_table('diacritic_mappings') or not inspector.has_table('feedback'):
             db.create_all()
             logger.info("Created database tables")
         else:

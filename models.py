@@ -22,4 +22,23 @@ class DiacriticMapping(db.Model):
             'diacritic_text': self.diacritic_text,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class Feedback(db.Model):
+    __tablename__ = 'feedback'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    message = db.Column(db.Text, nullable=False)
+    email = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<Feedback {self.id}: {self.message[:30]}...>"
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'message': self.message,
+            'email': self.email,
+            'created_at': self.created_at.isoformat() if self.created_at else None
         } 

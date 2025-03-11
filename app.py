@@ -13,12 +13,13 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
 # Import modules
-from database import init_db, DiacriticMapping
+from database import init_db, DiacriticMapping, Feedback
 from diacritics import translate_text, load_mappings_from_file
 from db_operations import (
     load_mappings_from_db, save_mapping_to_db, update_mapping_in_db,
     delete_mapping_from_db, batch_delete_mappings_from_db,
-    process_uploaded_mappings_file, migrate_mappings_from_file_to_db
+    process_uploaded_mappings_file, migrate_mappings_from_file_to_db,
+    save_feedback_to_db, get_all_feedback, delete_feedback_from_db
 )
 
 # Load environment variables
@@ -313,6 +314,42 @@ def download_mappings():
         response.headers["Content-Disposition"] = "attachment; filename=mappings.txt"
         
         return response
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API endpoints for feedback
+@app.route('/api/feedback', methods=['POST'])
+def submit_feedback():
+    data = request.json
+    message = data.get('message', '').strip()
+    email = data.get('email', '').strip() or None
+    
+    if not message:
+        return jsonify({'error': 'Feedback message is required'}), 400
+    
+    try:
+        feedback = save_feedback_to_db(message, email)
+        return jsonify(feedback.to_dict()), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/feedback', methods=['GET'])
+@login_required
+def get_feedback():
+    try:
+        feedback_entries = get_all_feedback()
+        return jsonify([feedback.to_dict() for feedback in feedback_entries])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/feedback/<int:feedback_id>', methods=['DELETE'])
+@login_required
+def delete_feedback(feedback_id):
+    try:
+        success = delete_feedback_from_db(feedback_id)
+        if success:
+            return jsonify({'success': True})
+        return jsonify({'error': 'Feedback not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

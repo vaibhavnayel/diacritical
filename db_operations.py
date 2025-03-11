@@ -4,7 +4,7 @@ Handles CRUD operations for diacritic mappings.
 """
 
 import logging
-from database import db, DiacriticMapping
+from database import db, DiacriticMapping, Feedback
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -225,4 +225,42 @@ def migrate_mappings_from_file_to_db(file_path: str):
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error migrating mappings from file to database: {e}")
-        raise 
+        raise
+
+def save_feedback_to_db(message: str, email: str = None) -> Feedback:
+    """Save a new feedback entry to the database"""
+    try:
+        feedback = Feedback(message=message, email=email)
+        db.session.add(feedback)
+        db.session.commit()
+        logger.info(f"Saved feedback: {message[:30]}...")
+        return feedback
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error saving feedback to database: {e}")
+        raise
+
+def get_all_feedback() -> list[Feedback]:
+    """Get all feedback entries from the database, ordered by most recent first"""
+    try:
+        feedback_entries = Feedback.query.order_by(Feedback.created_at.desc()).all()
+        logger.info(f"Retrieved {len(feedback_entries)} feedback entries")
+        return feedback_entries
+    except Exception as e:
+        logger.error(f"Error retrieving feedback from database: {e}")
+        return []
+
+def delete_feedback_from_db(feedback_id: int) -> bool:
+    """Delete a feedback entry from the database"""
+    try:
+        feedback = Feedback.query.get(feedback_id)
+        if feedback:
+            db.session.delete(feedback)
+            db.session.commit()
+            logger.info(f"Deleted feedback {feedback_id}")
+            return True
+        return False
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting feedback from database: {e}")
+        return False 
