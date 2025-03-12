@@ -11,6 +11,7 @@ import time
 import tempfile
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Import modules
 from database import init_db, DiacriticMapping, Feedback
@@ -350,6 +351,41 @@ def delete_feedback(feedback_id):
         if success:
             return jsonify({'success': True})
         return jsonify({'error': 'Feedback not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/feedback/download', methods=['GET'])
+@login_required
+def download_feedback():
+    try:
+        # Get all feedback from the database
+        feedback_entries = get_all_feedback()
+        
+        # Create a CSV string with all feedback
+        csv_data = "Date,Message,Email\n"
+        for feedback in feedback_entries:
+            # Format the date
+            date = datetime.fromisoformat(feedback.to_dict()['created_at'].replace('Z', '+00:00'))
+            formatted_date = date.strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Escape commas and quotes in the message
+            message = feedback.message.replace('"', '""')
+            email = feedback.email or "Not provided"
+            
+            # Add the row to the CSV
+            csv_data += f'"{formatted_date}","{message}","{email}"\n'
+        
+        # Create a response with the feedback CSV
+        response = app.response_class(
+            response=csv_data,
+            status=200,
+            mimetype='text/csv'
+        )
+        
+        # Set the Content-Disposition header to make the browser download the file
+        response.headers["Content-Disposition"] = "attachment; filename=feedback.csv"
+        
+        return response
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

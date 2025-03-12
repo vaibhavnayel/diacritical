@@ -34,7 +34,7 @@
         <h1 class="page-title">Manage Diacritical Mappings</h1>
         <div class="nav-buttons">
             <a href="{{ url_for('translator') }}" class="btn btn-primary">
-                <i class="fas fa-language"></i> Back to Translator
+                <i class="fas fa-language"></i> Transliterate Now
             </a>
             <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
                 <i class="fas fa-sign-out-alt"></i> Logout
@@ -154,6 +154,11 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">User Feedback</h4>
+                    <div class="btn-group">
+                        <a href="/api/feedback/download" class="btn btn-success" id="downloadFeedbackBtn">
+                            <i class="fas fa-download"></i> Download Feedback
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -331,6 +336,7 @@
         // Initialize feedback table
         $('#feedbackTable').DataTable({
             order: [[0, 'desc']], // Sort by date descending
+            pageLength: 100, // Changed from 10 to 100
             columnDefs: [
                 { width: '15%', targets: 0 }, // Date column
                 { width: '55%', targets: 1 }, // Feedback column
@@ -369,8 +375,8 @@
         });
         
         // Show alert function (reused from mappings.js)
-        function showAlert(type, message) {
-            const alertHtml = `
+        function showAlert(message, type = 'success') {
+            const alertHTML = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                     ${message}
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -378,13 +384,24 @@
                     </button>
                 </div>
             `;
-            $('#alerts').html(alertHtml);
             
-            // Auto-dismiss after 5 seconds
+            $('#alerts').html(alertHTML);
+            
+            // Auto dismiss after 5 seconds
             setTimeout(function() {
                 $('.alert').alert('close');
             }, 5000);
         }
+        
+        // Add animation to the feedback download button
+        $('#downloadFeedbackBtn').hover(
+            function() {
+                $(this).find('i').addClass('fa-bounce');
+            },
+            function() {
+                $(this).find('i').removeClass('fa-bounce');
+            }
+        );
     });
 </script>
 {% endblock %} 
