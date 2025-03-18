@@ -6,8 +6,6 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_bootstrap import Bootstrap
 from functools import wraps
 import os
-import threading
-import time
 import tempfile
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
@@ -19,7 +17,7 @@ from diacritics import translate_text, load_mappings_from_file
 from db_operations import (
     load_mappings_from_db, save_mapping_to_db, update_mapping_in_db,
     delete_mapping_from_db, batch_delete_mappings_from_db,
-    process_uploaded_mappings_file, migrate_mappings_from_file_to_db,
+    process_uploaded_mappings_file,
     save_feedback_to_db, get_all_feedback, delete_feedback_from_db
 )
 
@@ -46,24 +44,6 @@ init_db(app)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY')
 USERNAME = os.environ.get('APP_USERNAME')
 PASSWORD = os.environ.get('APP_PASSWORD')
-
-# Migration status tracking
-migration_status = {
-    'status': 'idle',
-    'message': '',
-    'count': 0,
-    'total': 0,
-    'start_time': None
-}
-
-# Add CLI commands
-@app.cli.command("lowercase-migration")
-def lowercase_migration_command():
-    """Convert all mappings in the database to lowercase."""
-    from lowercase_migration import run_migration
-    print("Starting lowercase migration...")
-    run_migration()
-    print("Migration completed.")
 
 # Login decorator
 def login_required(f):
@@ -228,69 +208,6 @@ def upload_mappings():
         return jsonify(stats)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-# Migration endpoints
-def perform_migration(file_path):
-    """Background task to perform migration"""
-    global migration_status
-    
-    try:
-        migration_status['status'] = 'in_progress'
-        migration_status['message'] = 'Loading mappings from file...'
-        migration_status['start_time'] = time.time()
-        
-        # Migrate mappings
-        count = migrate_mappings_from_file_to_db(file_path)
-        
-        elapsed_time = time.time() - migration_status['start_time']
-        migration_status['message'] = f'Migration completed in {elapsed_time:.2f} seconds'
-        migration_status['status'] = 'completed'
-        migration_status['count'] = count
-        
-    except Exception as e:
-        migration_status['status'] = 'error'
-        migration_status['message'] = f'Error: {str(e)}'
-
-@app.route('/api/migrate', methods=['POST'])
-@login_required
-def migrate_mappings():
-    global migration_status
-    
-    # Check if migration is already in progress
-    if migration_status['status'] == 'in_progress':
-        return jsonify({'error': 'Migration already in progress'}), 400
-    
-    try:
-        # Reset migration status
-        migration_status = {
-            'status': 'starting',
-            'message': 'Starting migration...',
-            'count': 0,
-            'total': 0,
-            'start_time': time.time()
-        }
-        
-        # Start migration in a background thread
-        thread = threading.Thread(target=perform_migration, args=('mappings.txt',))
-        thread.daemon = True
-        thread.start()
-        
-        return jsonify({'success': True, 'message': 'Migration started'})
-    except Exception as e:
-        migration_status['status'] = 'error'
-        migration_status['message'] = str(e)
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/migrate/status', methods=['GET'])
-@login_required
-def get_migration_status():
-    return jsonify({
-        'status': migration_status['status'],
-        'message': migration_status['message'],
-        'count': migration_status['count'],
-        'total': migration_status['total'],
-        'elapsed': time.time() - migration_status['start_time'] if migration_status['start_time'] else 0
-    })
 
 @app.route('/api/mappings/download', methods=['GET'])
 @login_required

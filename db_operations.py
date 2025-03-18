@@ -185,50 +185,6 @@ def process_uploaded_mappings_file(file_path: str, mode: str = 'update') -> dict
         logger.error(f"Error processing uploaded mappings file: {e}")
         raise
 
-def migrate_mappings_from_file_to_db(file_path: str):
-    """Migrate mappings from a text file to the database using bulk insert for better performance"""
-    from diacritics import load_mappings_from_file
-    
-    try:
-        # Load mappings from the file
-        mappings = load_mappings_from_file(file_path)
-        logger.info(f"Loaded {len(mappings)} mappings from file, preparing for migration")
-        
-        # Get existing mappings to avoid duplicates
-        existing_mappings = set()
-        for mapping in DiacriticMapping.query.with_entities(DiacriticMapping.plain_text).all():
-            existing_mappings.add(mapping[0])
-        
-        # Prepare mappings for bulk insert
-        mappings_to_add = []
-        count = 0
-        
-        for plain_text, diacritic_text in mappings.items():
-            if plain_text not in existing_mappings:
-                mappings_to_add.append({
-                    'plain_text': plain_text,
-                    'diacritic_text': diacritic_text
-                })
-                count += 1
-        
-        # Use bulk insert if there are mappings to add
-        if mappings_to_add:
-            # Process in batches of 1000 for better performance
-            batch_size = 1000
-            for i in range(0, len(mappings_to_add), batch_size):
-                batch = mappings_to_add[i:i+batch_size]
-                db.session.bulk_insert_mappings(DiacriticMapping, batch)
-                db.session.commit()
-                logger.info(f"Inserted batch of {len(batch)} mappings")
-        
-        logger.info(f"Migrated {count} mappings from file {file_path} to database")
-        return count
-        
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error migrating mappings from file to database: {e}")
-        raise
-
 def save_feedback_to_db(message: str, email: str = None) -> Feedback:
     """Save a new feedback entry to the database"""
     try:
