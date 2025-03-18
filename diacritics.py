@@ -12,6 +12,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+ESCAPE_SEQUENCE = "*/*"
+
 # Text processing functions
 def read_docx(path: str) -> str:
     """Read text from a DOCX file"""
@@ -36,18 +38,29 @@ def remove_diacritics(word: str) -> str:
     normalized = unicodedata.normalize('NFKD', word)
     return ''.join(c for c in normalized if not unicodedata.combining(c))
 
+def match_case(word: str, mapping: str) -> str:
+    """Match the case of a mapping to a word"""
+    if word.isupper():
+        return mapping.upper()
+    elif word.islower():
+        return mapping.lower()
+    elif word[0].isupper():
+        return mapping[0].upper() + mapping[1:]
+    else:
+        raise ValueError(f"Cannot add diacritics to word: {word} with mapping: {mapping}")
+
 def add_diacritics(word: str, mappings: dict[str, str]) -> str:
     """Add diacritics to a word based on mappings"""
-    word_with_diacritics = mappings.get(word.lower(), word)
-
-    if word.isupper():
-        return word_with_diacritics.upper()
-    elif word.islower():
-        return word_with_diacritics.lower()
-    elif word[0].isupper():
-        return word_with_diacritics[0].upper() + word_with_diacritics[1:]
+    mapping = mappings.get(word.lower(), word)
+    
+    if ESCAPE_SEQUENCE in mapping:
+        # one-to-many mappings
+        # mappings={"lalita":"*/*lalita,lalitā*/*"} would change "Lalita" to "*/*Lalita,Lalitā*/*"
+        words_with_diacritics = mapping.replace(ESCAPE_SEQUENCE, "").replace(" ", "").split(",")
+        words_with_diacritics = [match_case(word, w) for w in words_with_diacritics]
+        return f"{ESCAPE_SEQUENCE}{','.join(words_with_diacritics)}{ESCAPE_SEQUENCE}"
     else:
-        raise ValueError(f"Cannot add diacritics to word: {word} with mapping: {word_with_diacritics}")
+        return match_case(word, mapping)
     
 def make_mappings(tokens: list[str]) -> dict[str, str]:
     """Create mappings from tokens with diacritics"""
