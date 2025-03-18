@@ -10,6 +10,10 @@ from database import db, DiacriticMapping, Feedback
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Constants
+BATCH_SIZE = 1000
+
+# Mapping operations
 def load_mappings_from_db() -> dict[str, str]:
     """Load mappings from the database"""
     mappings = {}
@@ -25,7 +29,10 @@ def load_mappings_from_db() -> dict[str, str]:
 def save_mapping_to_db(plain_text: str, diacritic_text: str) -> DiacriticMapping:
     """Save a new mapping to the database"""
     try:
-        mapping = DiacriticMapping(plain_text=plain_text.lower(), diacritic_text=diacritic_text.lower())
+        mapping = DiacriticMapping(
+            plain_text=plain_text.lower(), 
+            diacritic_text=diacritic_text.lower()
+        )
         db.session.add(mapping)
         db.session.commit()
         logger.info(f"Saved mapping: {plain_text.lower()} -> {diacritic_text.lower()}")
@@ -75,23 +82,22 @@ def batch_delete_mappings_from_db(ids: list[int]) -> int:
         Number of mappings deleted
     """
     try:
-        # Get the mappings to delete
         mappings = DiacriticMapping.query.filter(DiacriticMapping.id.in_(ids)).all()
         deleted_count = len(mappings)
         
-        # Delete the mappings
         for mapping in mappings:
             db.session.delete(mapping)
         
         db.session.commit()
-        logger.info(f"Batch deleted {deleted_count} mappings with IDs: {ids}")
+        logger.info(f"Batch deleted {deleted_count} mappings")
         return deleted_count
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error batch deleting mappings: {e}")
         raise
 
-def process_uploaded_mappings_file(file_path: str, mode: str = 'update') -> dict:
+# File processing operations
+def process_uploaded_mappings_file(file_path: str, mode: str = 'update') -> dict[str, int]:
     """Process an uploaded mappings file
     
     Args:
@@ -104,7 +110,6 @@ def process_uploaded_mappings_file(file_path: str, mode: str = 'update') -> dict
     from diacritics import load_mappings_from_file
     
     try:
-        # Load mappings from the uploaded file
         uploaded_mappings = load_mappings_from_file(file_path)
         logger.info(f"Loaded {len(uploaded_mappings)} mappings from uploaded file")
         
@@ -115,68 +120,10 @@ def process_uploaded_mappings_file(file_path: str, mode: str = 'update') -> dict
             'unchanged': 0
         }
         
-        # If overwrite mode, delete all existing mappings
         if mode == 'overwrite':
-            try:
-                # Delete all existing mappings
-                DiacriticMapping.query.delete()
-                db.session.commit()
-                logger.info("Deleted all existing mappings for overwrite mode")
-                
-                # Add all mappings from the uploaded file
-                mappings_to_add = []
-                for plain_text, diacritic_text in uploaded_mappings.items():
-                    mappings_to_add.append({
-                        'plain_text': plain_text.lower(),
-                        'diacritic_text': diacritic_text.lower()
-                    })
-                
-                # Use bulk insert for better performance
-                batch_size = 1000
-                for i in range(0, len(mappings_to_add), batch_size):
-                    batch = mappings_to_add[i:i+batch_size]
-                    db.session.bulk_insert_mappings(DiacriticMapping, batch)
-                    db.session.commit()
-                
-                stats['added'] = len(uploaded_mappings)
-                logger.info(f"Added {stats['added']} mappings in overwrite mode")
-                
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Error in overwrite mode: {e}")
-                raise
-                
-        # Update mode - add new mappings and update existing ones
+            stats = _process_overwrite_mode(uploaded_mappings)
         else:
-            # Get existing mappings
-            existing_mappings = {}
-            for mapping in DiacriticMapping.query.all():
-                existing_mappings[mapping.plain_text] = {
-                    'id': mapping.id,
-                    'diacritic_text': mapping.diacritic_text
-                }
-            
-            # Process each mapping from the uploaded file
-            for plain_text, diacritic_text in uploaded_mappings.items():
-                plain_text = plain_text.lower()
-                diacritic_text = diacritic_text.lower()
-                if plain_text in existing_mappings:
-                    # Check if the mapping has changed
-                    if existing_mappings[plain_text]['diacritic_text'] != diacritic_text:
-                        # Update the existing mapping
-                        mapping = DiacriticMapping.query.get(existing_mappings[plain_text]['id'])
-                        mapping.diacritic_text = diacritic_text
-                        stats['updated'] += 1
-                    else:
-                        stats['unchanged'] += 1
-                else:
-                    # Add new mapping
-                    mapping = DiacriticMapping(plain_text=plain_text, diacritic_text=diacritic_text)
-                    db.session.add(mapping)
-                    stats['added'] += 1
-            
-            db.session.commit()
-            logger.info(f"Update mode: Added {stats['added']}, updated {stats['updated']}, unchanged {stats['unchanged']}")
+            stats = _process_update_mode(uploaded_mappings)
         
         return stats
         
@@ -185,7 +132,87 @@ def process_uploaded_mappings_file(file_path: str, mode: str = 'update') -> dict
         logger.error(f"Error processing uploaded mappings file: {e}")
         raise
 
-def migrate_mappings_from_file_to_db(file_path: str):
+def _process_overwrite_mode(uploaded_mappings: dict[str, str]) -> dict[str, int]:
+    """Process uploaded mappings in overwrite mode"""
+    try:
+        # Delete all existing mappings
+        DiacriticMapping.query.delete()
+        db.session.commit()
+        logger.info("Deleted all existing mappings for overwrite mode")
+        
+        # Add all mappings from the uploaded file
+        mappings_to_add = []
+        for plain_text, diacritic_text in uploaded_mappings.items():
+            mappings_to_add.append({
+                'plain_text': plain_text.lower(),
+                'diacritic_text': diacritic_text.lower()
+            })
+        
+        # Use bulk insert for better performance
+        for i in range(0, len(mappings_to_add), BATCH_SIZE):
+            batch = mappings_to_add[i:i+BATCH_SIZE]
+            db.session.bulk_insert_mappings(DiacriticMapping, batch)
+            db.session.commit()
+        
+        return {
+            'total': len(uploaded_mappings),
+            'added': len(uploaded_mappings),
+            'updated': 0,
+            'unchanged': 0
+        }
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error in overwrite mode: {e}")
+        raise
+
+def _process_update_mode(uploaded_mappings: dict[str, str]) -> dict[str, int]:
+    """Process uploaded mappings in update mode"""
+    try:
+        stats = {
+            'total': len(uploaded_mappings),
+            'added': 0,
+            'updated': 0,
+            'unchanged': 0
+        }
+        
+        # Get existing mappings
+        existing_mappings = {}
+        for mapping in DiacriticMapping.query.all():
+            existing_mappings[mapping.plain_text] = {
+                'id': mapping.id,
+                'diacritic_text': mapping.diacritic_text
+            }
+        
+        # Process each mapping from the uploaded file
+        for plain_text, diacritic_text in uploaded_mappings.items():
+            plain_text = plain_text.lower()
+            diacritic_text = diacritic_text.lower()
+            
+            if plain_text in existing_mappings:
+                if existing_mappings[plain_text]['diacritic_text'] != diacritic_text:
+                    # Update the existing mapping
+                    mapping = DiacriticMapping.query.get(existing_mappings[plain_text]['id'])
+                    mapping.diacritic_text = diacritic_text
+                    stats['updated'] += 1
+                else:
+                    stats['unchanged'] += 1
+            else:
+                # Add new mapping
+                mapping = DiacriticMapping(plain_text=plain_text, diacritic_text=diacritic_text)
+                db.session.add(mapping)
+                stats['added'] += 1
+        
+        db.session.commit()
+        logger.info(f"Update mode: Added {stats['added']}, updated {stats['updated']}, unchanged {stats['unchanged']}")
+        return stats
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error in update mode: {e}")
+        raise
+
+def migrate_mappings_from_file_to_db(file_path: str) -> int:
     """Migrate mappings from a text file to the database using bulk insert for better performance"""
     from diacritics import load_mappings_from_file
     
@@ -195,9 +222,10 @@ def migrate_mappings_from_file_to_db(file_path: str):
         logger.info(f"Loaded {len(mappings)} mappings from file, preparing for migration")
         
         # Get existing mappings to avoid duplicates
-        existing_mappings = set()
-        for mapping in DiacriticMapping.query.with_entities(DiacriticMapping.plain_text).all():
-            existing_mappings.add(mapping[0])
+        existing_mappings = {
+            mapping[0] for mapping in 
+            DiacriticMapping.query.with_entities(DiacriticMapping.plain_text).all()
+        }
         
         # Prepare mappings for bulk insert
         mappings_to_add = []
@@ -213,10 +241,9 @@ def migrate_mappings_from_file_to_db(file_path: str):
         
         # Use bulk insert if there are mappings to add
         if mappings_to_add:
-            # Process in batches of 1000 for better performance
-            batch_size = 1000
-            for i in range(0, len(mappings_to_add), batch_size):
-                batch = mappings_to_add[i:i+batch_size]
+            # Process in batches for better performance
+            for i in range(0, len(mappings_to_add), BATCH_SIZE):
+                batch = mappings_to_add[i:i+BATCH_SIZE]
                 db.session.bulk_insert_mappings(DiacriticMapping, batch)
                 db.session.commit()
                 logger.info(f"Inserted batch of {len(batch)} mappings")
@@ -229,6 +256,7 @@ def migrate_mappings_from_file_to_db(file_path: str):
         logger.error(f"Error migrating mappings from file to database: {e}")
         raise
 
+# Feedback operations
 def save_feedback_to_db(message: str, email: str = None) -> Feedback:
     """Save a new feedback entry to the database"""
     try:

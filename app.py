@@ -23,6 +23,10 @@ from db_operations import (
     save_feedback_to_db, get_all_feedback, delete_feedback_from_db
 )
 
+# Constants
+RENDER_POSTGRES_PREFIX = "postgres://"
+RENDER_POSTGRESQL_PREFIX = "postgresql://"
+
 # Load environment variables
 load_dotenv()
 
@@ -33,8 +37,8 @@ bootstrap = Bootstrap(app)
 # Database configuration
 database_url = os.environ.get('DATABASE_URL')
 # Fix for Render's postgres:// vs postgresql:// issue
-if database_url and database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql://", 1)
+if database_url and database_url.startswith(RENDER_POSTGRES_PREFIX):
+    database_url = database_url.replace(RENDER_POSTGRES_PREFIX, RENDER_POSTGRESQL_PREFIX, 1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -56,17 +60,11 @@ migration_status = {
     'start_time': None
 }
 
-# Add CLI commands
-@app.cli.command("lowercase-migration")
-def lowercase_migration_command():
-    """Convert all mappings in the database to lowercase."""
-    from lowercase_migration import run_migration
-    print("Starting lowercase migration...")
-    run_migration()
-    print("Migration completed.")
 
-# Login decorator
+
+# Authentication
 def login_required(f):
+    """Decorator to require login for protected routes"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'logged_in' not in session:
@@ -74,13 +72,15 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Routes
+# Basic routes
 @app.route('/', methods=['GET'])
 def index():
+    """Redirect to translator page"""
     return redirect(url_for('translator'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """Handle user login"""
     if request.method == 'POST':
         if request.form['username'] == USERNAME and request.form['password'] == PASSWORD:
             session['logged_in'] = True
@@ -91,15 +91,19 @@ def login():
 
 @app.route('/logout')
 def logout():
+    """Handle user logout"""
     session.pop('logged_in', None)
     return redirect(url_for('translator'))
 
+# Translator routes
 @app.route('/translator', methods=['GET'])
 def translator():
+    """Render translator page"""
     return render_template('translator.html')
 
 @app.route('/translate', methods=['POST'])
 def translate():
+    """Translate text with diacritics"""
     text = request.json.get('text', '')
     if not text:
         return jsonify({'error': 'No text provided'}), 400
@@ -113,21 +117,25 @@ def translate():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Mapping management routes
 @app.route('/mappings', methods=['GET'])
 @login_required
 def mappings_page():
+    """Render mappings management page"""
     return render_template('mappings.html')
 
-# API endpoints for mappings
+# Mapping API endpoints
 @app.route('/api/mappings', methods=['GET'])
 @login_required
 def get_mappings():
+    """Get all mappings"""
     mappings = DiacriticMapping.query.all()
     return jsonify([mapping.to_dict() for mapping in mappings])
 
 @app.route('/api/mappings', methods=['POST'])
 @login_required
 def add_mapping():
+    """Add a new mapping"""
     data = request.json
     plain_text = data.get('plain_text', '').strip().lower()
     diacritic_text = data.get('diacritic_text', '').strip().lower()
@@ -149,6 +157,7 @@ def add_mapping():
 @app.route('/api/mappings/<int:mapping_id>', methods=['PUT'])
 @login_required
 def update_mapping(mapping_id):
+    """Update an existing mapping"""
     data = request.json
     plain_text = data.get('plain_text', '').strip().lower()
     diacritic_text = data.get('diacritic_text', '').strip().lower()
@@ -172,6 +181,7 @@ def update_mapping(mapping_id):
 @app.route('/api/mappings/<int:mapping_id>', methods=['DELETE'])
 @login_required
 def delete_mapping(mapping_id):
+    """Delete a mapping"""
     try:
         success = delete_mapping_from_db(mapping_id)
         if success:
@@ -183,6 +193,7 @@ def delete_mapping(mapping_id):
 @app.route('/api/mappings/batch-delete', methods=['POST'])
 @login_required
 def batch_delete_mappings():
+    """Delete multiple mappings"""
     data = request.json
     ids = data.get('ids', [])
     
@@ -195,9 +206,11 @@ def batch_delete_mappings():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# File upload and processing
 @app.route('/api/mappings/upload', methods=['POST'])
 @login_required
 def upload_mappings():
+    """Upload mappings from a file"""
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
     
@@ -229,123 +242,44 @@ def upload_mappings():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# Migration endpoints
-def perform_migration(file_path):
-    """Background task to perform migration"""
-    global migration_status
-    
-    try:
-        migration_status['status'] = 'in_progress'
-        migration_status['message'] = 'Loading mappings from file...'
-        migration_status['start_time'] = time.time()
-        
-        # Migrate mappings
-        count = migrate_mappings_from_file_to_db(file_path)
-        
-        elapsed_time = time.time() - migration_status['start_time']
-        migration_status['message'] = f'Migration completed in {elapsed_time:.2f} seconds'
-        migration_status['status'] = 'completed'
-        migration_status['count'] = count
-        
-    except Exception as e:
-        migration_status['status'] = 'error'
-        migration_status['message'] = f'Error: {str(e)}'
-
-@app.route('/api/migrate', methods=['POST'])
+# Feedback routes
+@app.route('/feedback', methods=['GET'])
 @login_required
-def migrate_mappings():
-    global migration_status
-    
-    # Check if migration is already in progress
-    if migration_status['status'] == 'in_progress':
-        return jsonify({'error': 'Migration already in progress'}), 400
-    
-    try:
-        # Reset migration status
-        migration_status = {
-            'status': 'starting',
-            'message': 'Starting migration...',
-            'count': 0,
-            'total': 0,
-            'start_time': time.time()
-        }
-        
-        # Start migration in a background thread
-        thread = threading.Thread(target=perform_migration, args=('mappings.txt',))
-        thread.daemon = True
-        thread.start()
-        
-        return jsonify({'success': True, 'message': 'Migration started'})
-    except Exception as e:
-        migration_status['status'] = 'error'
-        migration_status['message'] = str(e)
-        return jsonify({'error': str(e)}), 500
+def feedback_page():
+    """Render feedback management page"""
+    return render_template('feedback.html')
 
-@app.route('/api/migrate/status', methods=['GET'])
-@login_required
-def get_migration_status():
-    return jsonify({
-        'status': migration_status['status'],
-        'message': migration_status['message'],
-        'count': migration_status['count'],
-        'total': migration_status['total'],
-        'elapsed': time.time() - migration_status['start_time'] if migration_status['start_time'] else 0
-    })
-
-@app.route('/api/mappings/download', methods=['GET'])
-@login_required
-def download_mappings():
-    try:
-        # Get all mappings from the database
-        mappings = DiacriticMapping.query.order_by(DiacriticMapping.plain_text).all()
-        
-        # Create a string with all mappings in the format plain_text,diacritic_text
-        mappings_text = ""
-        for mapping in mappings:
-            mappings_text += f"{mapping.plain_text},{mapping.diacritic_text}\n"
-        
-        # Create a response with the mappings text
-        response = app.response_class(
-            response=mappings_text,
-            status=200,
-            mimetype='text/plain'
-        )
-        
-        # Set the Content-Disposition header to make the browser download the file
-        response.headers["Content-Disposition"] = "attachment; filename=mappings.txt"
-        
-        return response
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# API endpoints for feedback
 @app.route('/api/feedback', methods=['POST'])
 def submit_feedback():
+    """Submit user feedback"""
     data = request.json
     message = data.get('message', '').strip()
     email = data.get('email', '').strip() or None
     
     if not message:
-        return jsonify({'error': 'Feedback message is required'}), 400
+        return jsonify({'error': 'Message is required'}), 400
     
     try:
         feedback = save_feedback_to_db(message, email)
-        return jsonify(feedback.to_dict()), 201
+        return jsonify({
+            'success': True,
+            'message': 'Feedback submitted successfully',
+            'feedback': feedback.to_dict()
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/feedback', methods=['GET'])
 @login_required
 def get_feedback():
-    try:
-        feedback_entries = get_all_feedback()
-        return jsonify([feedback.to_dict() for feedback in feedback_entries])
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    """Get all feedback entries"""
+    feedback_entries = get_all_feedback()
+    return jsonify([entry.to_dict() for entry in feedback_entries])
 
 @app.route('/api/feedback/<int:feedback_id>', methods=['DELETE'])
 @login_required
 def delete_feedback(feedback_id):
+    """Delete a feedback entry"""
     try:
         success = delete_feedback_from_db(feedback_id)
         if success:
@@ -354,41 +288,6 @@ def delete_feedback(feedback_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/feedback/download', methods=['GET'])
-@login_required
-def download_feedback():
-    try:
-        # Get all feedback from the database
-        feedback_entries = get_all_feedback()
-        
-        # Create a CSV string with all feedback
-        csv_data = "Date,Message,Email\n"
-        for feedback in feedback_entries:
-            # Format the date
-            date = datetime.fromisoformat(feedback.to_dict()['created_at'].replace('Z', '+00:00'))
-            formatted_date = date.strftime('%Y-%m-%d %H:%M:%S')
-            
-            # Escape commas and quotes in the message
-            message = feedback.message.replace('"', '""')
-            email = feedback.email or "Not provided"
-            
-            # Add the row to the CSV
-            csv_data += f'"{formatted_date}","{message}","{email}"\n'
-        
-        # Create a response with the feedback CSV
-        response = app.response_class(
-            response=csv_data,
-            status=200,
-            mimetype='text/csv'
-        )
-        
-        # Set the Content-Disposition header to make the browser download the file
-        response.headers["Content-Disposition"] = "attachment; filename=feedback.csv"
-        
-        return response
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# Run the application
 if __name__ == '__main__':
-    app.run(debug=True)
+    # app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(host='localhost', port=5000)

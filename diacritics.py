@@ -14,20 +14,15 @@ logger = logging.getLogger(__name__)
 
 ESCAPE_SEQUENCE = "*/*"
 
-# Text processing functions
 def read_docx(path: str) -> str:
     """Read text from a DOCX file"""
     doc = docx.Document(path)
-    text = ""
-    for paragraph in doc.paragraphs:
-        text += paragraph.text + "\n"
-    return text
+    return "\n".join(paragraph.text for paragraph in doc.paragraphs)
 
 def generate_tokens(text: str) -> list[str]:
     """Split text into tokens"""
     tokens = re.split(r'([^\w\u0300-\u036f\s]|\s+)', text)
-    tokens = [t for t in tokens if t]
-    return tokens
+    return [t for t in tokens if t]
 
 def join_tokens(tokens: list[str]) -> str:
     """Join tokens back into text"""
@@ -49,16 +44,18 @@ def match_case(word: str, mapping: str) -> str:
     else:
         raise ValueError(f"Cannot add diacritics to word: {word} with mapping: {mapping}")
 
+def process_one_to_many_mapping(word: str, mapping: str) -> str:
+    """Process a one-to-many mapping with escape sequences"""
+    words_with_diacritics = mapping.replace(ESCAPE_SEQUENCE, "").replace(" ", "").split(",")
+    words_with_diacritics = [match_case(word, w) for w in words_with_diacritics]
+    return f"{ESCAPE_SEQUENCE}{','.join(words_with_diacritics)}{ESCAPE_SEQUENCE}"
+
 def add_diacritics(word: str, mappings: dict[str, str]) -> str:
     """Add diacritics to a word based on mappings"""
     mapping = mappings.get(word.lower(), word)
     
     if ESCAPE_SEQUENCE in mapping:
-        # one-to-many mappings
-        # mappings={"lalita":"*/*lalita,lalitā*/*"} would change "Lalita" to "*/*Lalita,Lalitā*/*"
-        words_with_diacritics = mapping.replace(ESCAPE_SEQUENCE, "").replace(" ", "").split(",")
-        words_with_diacritics = [match_case(word, w) for w in words_with_diacritics]
-        return f"{ESCAPE_SEQUENCE}{','.join(words_with_diacritics)}{ESCAPE_SEQUENCE}"
+        return process_one_to_many_mapping(word, mapping)
     else:
         return match_case(word, mapping)
     
@@ -95,12 +92,13 @@ def verify(text: str, reconstructed_text: str, tokens: list[str], reconstructed_
             if orig != recon:
                 logger.warning(f"original: {orig}, reconstructed: {recon}")
         return False
-    else:
-        return True
+    return True
 
 def test_txt_file(path: str) -> bool:
     """Test the diacritics processing on a text file"""
-    text = open(path, "r").read()
+    with open(path, "r") as f:
+        text = f.read()
+    
     tokens = generate_tokens(text)
     mappings = make_mappings(tokens)
     reconstructed_tokens = reconstruct_tokens(tokens, mappings)
@@ -125,5 +123,4 @@ def translate_text(text: str, mappings: dict[str, str]) -> str:
     """Translate text by adding diacritics based on provided mappings"""
     tokens = generate_tokens(text)
     translated_tokens = reconstruct_tokens(tokens, mappings)
-    translated_text = join_tokens(translated_tokens)
-    return translated_text
+    return join_tokens(translated_tokens)
