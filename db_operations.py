@@ -25,10 +25,10 @@ def load_mappings_from_db() -> dict[str, str]:
 def save_mapping_to_db(plain_text: str, diacritic_text: str) -> DiacriticMapping:
     """Save a new mapping to the database"""
     try:
-        mapping = DiacriticMapping(plain_text=plain_text, diacritic_text=diacritic_text)
+        mapping = DiacriticMapping(plain_text=plain_text.lower(), diacritic_text=diacritic_text.lower())
         db.session.add(mapping)
         db.session.commit()
-        logger.info(f"Saved mapping: {plain_text} -> {diacritic_text}")
+        logger.info(f"Saved mapping: {plain_text.lower()} -> {diacritic_text.lower()}")
         return mapping
     except Exception as e:
         db.session.rollback()
@@ -40,10 +40,10 @@ def update_mapping_in_db(mapping_id: int, plain_text: str, diacritic_text: str) 
     try:
         mapping = DiacriticMapping.query.get(mapping_id)
         if mapping:
-            mapping.plain_text = plain_text
-            mapping.diacritic_text = diacritic_text
+            mapping.plain_text = plain_text.lower()
+            mapping.diacritic_text = diacritic_text.lower()
             db.session.commit()
-            logger.info(f"Updated mapping {mapping_id}: {plain_text} -> {diacritic_text}")
+            logger.info(f"Updated mapping {mapping_id}: {plain_text.lower()} -> {diacritic_text.lower()}")
         return mapping
     except Exception as e:
         db.session.rollback()
@@ -127,8 +127,8 @@ def process_uploaded_mappings_file(file_path: str, mode: str = 'update') -> dict
                 mappings_to_add = []
                 for plain_text, diacritic_text in uploaded_mappings.items():
                     mappings_to_add.append({
-                        'plain_text': plain_text,
-                        'diacritic_text': diacritic_text
+                        'plain_text': plain_text.lower(),
+                        'diacritic_text': diacritic_text.lower()
                     })
                 
                 # Use bulk insert for better performance
@@ -158,6 +158,8 @@ def process_uploaded_mappings_file(file_path: str, mode: str = 'update') -> dict
             
             # Process each mapping from the uploaded file
             for plain_text, diacritic_text in uploaded_mappings.items():
+                plain_text = plain_text.lower()
+                diacritic_text = diacritic_text.lower()
                 if plain_text in existing_mappings:
                     # Check if the mapping has changed
                     if existing_mappings[plain_text]['diacritic_text'] != diacritic_text:

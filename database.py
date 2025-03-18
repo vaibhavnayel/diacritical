@@ -24,8 +24,8 @@ class DiacriticMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     plain_text = db.Column(db.String(255), unique=True, nullable=False)
     diacritic_text = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.UTC))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.UTC), onupdate=lambda: datetime.now(datetime.UTC))
     
     def __repr__(self):
         return f"<DiacriticMapping {self.plain_text} -> {self.diacritic_text}>"
@@ -49,7 +49,7 @@ class Feedback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     message = db.Column(db.Text, nullable=False)
     email = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.UTC))
     
     def __repr__(self):
         return f"<Feedback {self.id}: {self.message[:30]}...>"

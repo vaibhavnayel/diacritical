@@ -102,7 +102,7 @@ def load_mappings_from_file(path: str) -> dict[str, str]:
             for line in f:
                 if ',' in line:
                     k, v = line.strip().split(",", 1)  # Split on first comma only
-                    mappings[k] = v
+                    mappings[k.lower()] = v.lower()  # Convert key and value to lowercase
         logger.info(f"Loaded {len(mappings)} mappings from file {path}")
     except Exception as e:
         logger.error(f"Error loading mappings from file {path}: {e}")
