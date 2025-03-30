@@ -12,8 +12,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-ESCAPE_SEQUENCE = "*/*"
-
 # Text processing functions
 def read_docx(path: str) -> str:
     """Read text from a DOCX file"""
@@ -49,16 +47,42 @@ def match_case(word: str, mapping: str) -> str:
     else:
         raise ValueError(f"Cannot add diacritics to word: {word} with mapping: {mapping}")
 
+def handle_one_to_many_mappings(word: str, mapping: str) -> str:
+    diacritics = mapping.replace("{{", "").replace("}}", "").replace(" ", "").split(",")
+    return f"{{{{{','.join([match_case(word, m) for m in diacritics])}}}}}"
+
 def add_diacritics(word: str, mappings: dict[str, str]) -> str:
-    """Add diacritics to a word based on mappings"""
-    mapping = mappings.get(word.lower(), word)
+    """
+    Add diacritics to a word based on mappings
+
+    cases:
+    # single word
+    - we want to map a single word to a single word
+    - eg "lalitā"
+
+    # multiple words
+    - we want to map a single word to multiple words
+    - eg "{{lalita, lalitā}}"
+
+    # 2 groups of multiple words
+    - we want to map a single word to multiple words, but the mapping changes depending on the case of the word
+    - if the word is lowercase, map it to the first group
+    - if the word is uppercase, map it to the second group
+    - eg "{{nayaka, nayak}}{{nayak}}"
+    """
     
-    if ESCAPE_SEQUENCE in mapping:
-        # one-to-many mappings
-        # mappings={"lalita":"*/*lalita,lalitā*/*"} would change "Lalita" to "*/*Lalita,Lalitā*/*"
-        words_with_diacritics = mapping.replace(ESCAPE_SEQUENCE, "").replace(" ", "").split(",")
-        words_with_diacritics = [match_case(word, w) for w in words_with_diacritics]
-        return f"{ESCAPE_SEQUENCE}{','.join(words_with_diacritics)}{ESCAPE_SEQUENCE}"
+    mapping = mappings.get(word.lower(), word)
+
+    if matches := re.findall(r'\{\{.*?\}\}', mapping):
+        if len(matches) == 1:
+            return handle_one_to_many_mappings(word, matches[0])
+        elif len(matches) == 2:
+            if word[0].islower():
+                return handle_one_to_many_mappings(word, matches[0])
+            else:
+                return handle_one_to_many_mappings(word, matches[1])
+        else:
+            raise ValueError(f"Invalid mapping: {mapping}")
     else:
         return match_case(word, mapping)
     
