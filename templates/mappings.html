@@ -44,6 +44,36 @@
 
     <div id="alerts"></div>
 
+    <!-- Instructions Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Instructions</h4>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <strong>One-to-one mapping:</strong><br>
+                        - Map a single word to a single word<br>
+                        - Example: abhisheka → abhis͟heka
+                    </p>
+                    <p>
+                        <strong>One-to-many mapping:</strong><br>
+                        - Map a single word to multiple words<br>
+                        - Example: lalita → &#123;&#123;lalita, lalitā&#125;&#125;
+                    </p>
+                    <p>
+                        <strong>Case sensitive one-to-many mapping:</strong><br>
+                        - Map a single word to multiple words, but the mapping changes depending on the case<br>
+                        - If the word starts with a lowercase letter, map it to the first group<br>
+                        - If the word starts with an uppercase letter, map it to the second group<br>
+                        - Example: nayak → &#123;&#123;nayaka, nayak&#125;&#125;&#123;&#123;nayak&#125;&#125;
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Mappings Section -->
     <div class="row">
         <div class="col-md-6">
