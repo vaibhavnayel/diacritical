@@ -49,41 +49,61 @@ def match_case(word: str, mapping: str) -> str:
 
 def handle_one_to_many_mappings(word: str, mapping: str) -> str:
     diacritics = mapping.replace("{{", "").replace("}}", "").replace(" ", "").split(",")
-    return f"{{{{{','.join([match_case(word, m) for m in diacritics])}}}}}"
+    if len(diacritics) == 1:
+        # single word should display without curly brackets
+        return match_case(word, diacritics[0])
+    else:
+        # multiple words
+        return f"{{{{{','.join([match_case(word, m) for m in diacritics])}}}}}"
 
 def add_diacritics(word: str, mappings: dict[str, str]) -> str:
     """
     Add diacritics to a word based on mappings
 
     cases:
-    # single word
+    # 1: single word
     - we want to map a single word to a single word
     - eg "lalitā"
 
-    # multiple words
+    # 2: multiple words
     - we want to map a single word to multiple words
     - eg "{{lalita, lalitā}}"
 
-    # 2 groups of multiple words
+    # 3: 2 groups of multiple words
     - we want to map a single word to multiple words, but the mapping changes depending on the case of the word
     - if the word is lowercase, map it to the first group
     - if the word is uppercase, map it to the second group
     - eg "{{nayaka, nayak}}{{nayak}}"
+
+    # 4: 2 groups, but only one group is used (Spellcheck)
+    - This is mostly for proper nouns.
+    - lowercase inputs are accidental and should always map to the second group ie become capitalized
+    - eg "{{}}{{nāyel}}"
+    nayel -> Nāyel
+    Nayel -> Nāyel
     """
     
     mapping = mappings.get(word.lower(), word)
 
     if matches := re.findall(r'\{\{.*?\}\}', mapping):
         if len(matches) == 1:
+            #case 2
             return handle_one_to_many_mappings(word, matches[0])
         elif len(matches) == 2:
+            #case 3
             if word[0].islower():
-                return handle_one_to_many_mappings(word, matches[0])
+                lower_case_mapping = handle_one_to_many_mappings(word, matches[0])
+                if lower_case_mapping=="":
+                    # case 4
+                    return handle_one_to_many_mappings(word.title(), matches[1])
+                else:
+                    return lower_case_mapping
             else:
                 return handle_one_to_many_mappings(word, matches[1])
         else:
             raise ValueError(f"Invalid mapping: {mapping}")
     else:
+        #case 1
         return match_case(word, mapping)
     
 def make_mappings(tokens: list[str]) -> dict[str, str]:
