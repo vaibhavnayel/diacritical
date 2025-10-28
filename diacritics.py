@@ -7,6 +7,7 @@ import docx
 import re
 import unicodedata
 import logging
+from devnagri import convert_devanagari_tokens
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -115,16 +116,21 @@ def make_mappings(tokens: list[str]) -> dict[str, str]:
             mappings[token_without_diacritics.lower()] = token.lower()
     return mappings
 
-def reconstruct_tokens(tokens: list[str], mappings: dict[str, str]) -> list[str]:
-    """Reconstruct tokens with diacritics based on mappings"""
-    reconstructed_tokens = []
-    for token in tokens:
+def reconstruct_tokens(tokens: list[str], mappings: dict[str, str], skip_indices=None) -> list[str]:
+    """Reconstruct tokens with diacritics; optionally skip applying mappings for indices."""
+    translated_tokens = []
+    for i, token in enumerate(tokens):
+        if skip_indices and i in skip_indices:
+            translated_tokens.append(token)
+            continue
         token_without_diacritics = remove_diacritics(token)
         if token_without_diacritics.lower() not in mappings:
-            reconstructed_tokens.append(token_without_diacritics)
+            translated_tokens.append(token_without_diacritics)
         else:
-            reconstructed_tokens.append(add_diacritics(token_without_diacritics, mappings))
-    return reconstructed_tokens
+            translated_tokens.append(add_diacritics(token_without_diacritics, mappings))
+    return translated_tokens
+
+ 
 
 def verify(text: str, reconstructed_text: str, tokens: list[str], reconstructed_tokens: list[str]) -> bool:
     """Verify that the reconstructed text matches the original"""
@@ -166,8 +172,14 @@ def load_mappings_from_file(path: str) -> dict[str, str]:
     return mappings
 
 def translate_text(text: str, mappings: dict[str, str]) -> str:
-    """Translate text by adding diacritics based on provided mappings"""
+    """
+    Translate text by converting Devanagari to Latin (with diacritics) and adding diacritics 
+    to Latin text based on provided mappings.
+    
+    Processing:
+    1. Devanagari tokens → Latin with diacritics (phonetic, already complete)
+    2. Latin tokens → Apply database mappings for diacritics
+    """
     tokens = generate_tokens(text)
-    translated_tokens = reconstruct_tokens(tokens, mappings)
-    translated_text = join_tokens(translated_tokens)
-    return translated_text
+    preprocessed_tokens, skip_indices = convert_devanagari_tokens(tokens)
+    return join_tokens(reconstruct_tokens(preprocessed_tokens, mappings, skip_indices))
